@@ -287,3 +287,107 @@ AddEventHandler('admin:openMenu', function()
 end)
 
 print("^2[Admin-System]^7 Client ready")
+
+-- Give weapon
+RegisterNetEvent('admin:giveWeapon')
+AddEventHandler('admin:giveWeapon', function(weapon)
+    local ped = PlayerPedId()
+    local weaponHash = GetHashKey('WEAPON_' .. weapon)
+    
+    GiveWeaponToPed(ped, weaponHash, 999, false, true)
+    SetPedAmmo(ped, weaponHash, 999)
+    
+    TriggerEvent('chat:addMessage', {
+        color = {0, 255, 0},
+        args = {'[Admin]', 'Received weapon: ' .. weapon}
+    })
+end)
+
+-- Give all weapons
+RegisterNetEvent('admin:giveAllWeapons')
+AddEventHandler('admin:giveAllWeapons', function()
+    local ped = PlayerPedId()
+    
+    local weapons = {
+        -- Pistols
+        'PISTOL', 'COMBATPISTOL', 'APPISTOL', 'PISTOL50', 'SNSPISTOL', 'HEAVYPISTOL', 'VINTAGEPISTOL', 'MARKSMANPISTOL', 'REVOLVER',
+        -- SMGs
+        'MICROSMG', 'SMG', 'ASSAULTSMG', 'COMBATPDW', 'MACHINEPISTOL', 'MINISMG',
+        -- Shotguns
+        'PUMPSHOTGUN', 'SAWNOFFSHOTGUN', 'ASSAULTSHOTGUN', 'BULLPUPSHOTGUN', 'MUSKET', 'HEAVYSHOTGUN', 'DBSHOTGUN', 'AUTOSHOTGUN',
+        -- Assault Rifles
+        'ASSAULTRIFLE', 'CARBINERIFLE', 'ADVANCEDRIFLE', 'SPECIALCARBINE', 'BULLPUPRIFLE', 'COMPACTRIFLE',
+        -- LMGs
+        'MG', 'COMBATMG', 'GUSENBERG',
+        -- Sniper Rifles
+        'SNIPERRIFLE', 'HEAVYSNIPER', 'MARKSMANRIFLE',
+        -- Heavy Weapons
+        'RPG', 'GRENADELAUNCHER', 'MINIGUN', 'FIREWORK', 'RAILGUN', 'HOMINGLAUNCHER', 'COMPACTLAUNCHER',
+        -- Throwables
+        'GRENADE', 'STICKYBOMB', 'PROXMINE', 'BZGAS', 'MOLOTOV', 'FIREEXTINGUISHER', 'PETROLCAN', 'SNOWBALL', 'FLARE',
+        -- Melee
+        'KNIFE', 'NIGHTSTICK', 'HAMMER', 'BAT', 'CROWBAR', 'GOLFCLUB', 'BOTTLE', 'DAGGER', 'HATCHET', 'KNUCKLE', 'MACHETE', 'FLASHLIGHT', 'SWITCHBLADE', 'POOLCUE', 'WRENCH', 'BATTLEAXE'
+    }
+    
+    for _, weapon in ipairs(weapons) do
+        local weaponHash = GetHashKey('WEAPON_' .. weapon)
+        GiveWeaponToPed(ped, weaponHash, 999, false, false)
+        SetPedAmmo(ped, weaponHash, 999)
+    end
+    
+    TriggerEvent('chat:addMessage', {
+        color = {0, 255, 0},
+        args = {'[Admin]', 'Received all weapons!'}
+    })
+end)
+
+-- Player nametags
+local showNametags = false
+
+RegisterNetEvent('admin:toggleNametags')
+AddEventHandler('admin:toggleNametags', function()
+    showNametags = not showNametags
+end)
+
+-- Draw nametags thread
+CreateThread(function()
+    while true do
+        Wait(0)
+        
+        if showNametags then
+            local players = GetActivePlayers()
+            local myPed = PlayerPedId()
+            local myCoords = GetEntityCoords(myPed)
+            
+            for _, player in ipairs(players) do
+                local targetPed = GetPlayerPed(player)
+                
+                if targetPed ~= myPed then
+                    local targetCoords = GetEntityCoords(targetPed)
+                    local distance = #(myCoords - targetCoords)
+                    
+                    if distance < 50.0 then
+                        local playerName = GetPlayerName(player)
+                        local playerId = GetPlayerServerId(player)
+                        
+                        -- Draw 3D text above player's head
+                        local onScreen, x, y = World3dToScreen2d(targetCoords.x, targetCoords.y, targetCoords.z + 1.0)
+                        
+                        if onScreen then
+                            SetTextScale(0.35, 0.35)
+                            SetTextFont(4)
+                            SetTextProportional(1)
+                            SetTextColour(255, 255, 255, 215)
+                            SetTextEntry("STRING")
+                            SetTextCentre(1)
+                            AddTextComponentString('[' .. playerId .. '] ' .. playerName)
+                            DrawText(x, y)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+print("^2[Admin-System]^7 Weapons and nametags loaded")

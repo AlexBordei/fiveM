@@ -1,36 +1,71 @@
 -- Admin System Server Script
 print("^2[Admin-System]^7 Server script loaded")
 
--- Check if player is admin
-function IsAdmin(source)
-    local identifiers = GetPlayerIdentifiers(source)
+-- Runtime admin list (can be modified without restart)
+local runtimeAdmins = {}
+local bannedPlayers = {}
 
-    for _, identifier in pairs(identifiers) do
-        for _, adminId in pairs(Config.Admins) do
-            if identifier == adminId then
-                return true
+-- Load admins from config
+for _, adminId in pairs(Config.Admins) do
+    runtimeAdmins[adminId] = Config.AdminLevels[adminId] or Config.Permissions.moderator
+end
+
+-- Load bans from file
+local function LoadBans()
+    local file = io.open(GetResourcePath(GetCurrentResourceName()) .. '/bans.json', 'r')
+    if file then
+        local content = file:read('*a')
+        file:close()
+        if content and #content > 0 then
+            local success, data = pcall(json.decode, content)
+            if success and data then
+                bannedPlayers = data
+                print("^2[Admin-System]^7 Loaded " .. #bannedPlayers .. " bans")
             end
         end
     end
+end
 
+-- Save bans to file
+local function SaveBans()
+    local file = io.open(GetResourcePath(GetCurrentResourceName()) .. '/bans.json', 'w')
+    if file then
+        file:write(json.encode(bannedPlayers, {indent = true}))
+        file:close()
+    end
+end
+
+LoadBans()
+
+-- Check if player is banned
+local function IsBanned(identifier)
+    for _, ban in pairs(bannedPlayers) do
+        if ban.identifier == identifier then
+            return true, ban
+        end
+    end
+    return false
+end
+
+-- Check if player is admin
+function IsAdmin(source)
+    local identifiers = GetPlayerIdentifiers(source)
+    for _, identifier in pairs(identifiers) do
+        if runtimeAdmins[identifier] then
+            return true
+        end
+    end
     return false
 end
 
 -- Get admin permission level
 function GetAdminLevel(source)
     local identifiers = GetPlayerIdentifiers(source)
-
     for _, identifier in pairs(identifiers) do
-        if Config.AdminLevels[identifier] then
-            return Config.AdminLevels[identifier]
+        if runtimeAdmins[identifier] then
+            return runtimeAdmins[identifier]
         end
     end
-
-    -- Default admin level if in admin list but no specific level
-    if IsAdmin(source) then
-        return Config.Permissions.moderator
-    end
-
     return 0
 end
 
@@ -38,7 +73,6 @@ end
 function HasPermission(source, command)
     local level = GetAdminLevel(source)
     local required = Config.CommandPermissions[command] or 999
-
     return level >= required
 end
 
@@ -59,7 +93,164 @@ function SendMessage(source, message, type)
     })
 end
 
--- Player Management Commands
+-- Get player identifier
+function GetPlayerMainIdentifier(source)
+    local identifiers = GetPlayerIdentifiers(source)
+    for _, identifier in pairs(identifiers) do
+        if string.match(identifier, "license:") then
+            return identifier
+        end
+    end
+    return identifiers[1]
+end
+
+-- Make admin command
+RegisterCommand('makeadmin', function(source, args, rawCommand)
+    if not IsAdmin(source) then
+        SendMessage(source, 'You do not have permission to use this command', 'error')
+        return
+    end
+
+    local targetId = tonumber(args[1])
+    if not targetId then
+        SendMessage(source, 'Usage: /makeadmin [id] [level] (1=mod, 2=admin, 3=superadmin)', 'error')
+        return
+    end
+
+    local level = tonumber(args[2]) or Config.Permissions.moderator
+    local identifier = GetPlayerMainIdentifier(targetId)
+
+    runtimeAdmins[identifier] = level
+    SendMessage(source, 'Made ' .. GetPlayerName(targetId) .. ' an admin (level ' .. level .. ')', 'success')
+    SendMessage(targetId, 'You are now an admin! Type /admin for commands', 'success')
+end, false)
+
+-- Remove admin
+RegisterCommand('removeadmin', function(source, args, rawCommand)
+    if not IsAdmin(source) then
+        SendMessage(source, 'You do not have permission to use this command', 'error')
+        return
+    end
+
+    local targetId = tonumber(args[1])
+    if not targetId then
+        SendMessage(source, 'Usage: /removeadmin [id]', 'error')
+        return
+    end
+
+    local identifier = GetPlayerMainIdentifier(targetId)
+    runtimeAdmins[identifier] = nil
+    SendMessage(source, 'Removed admin from ' .. GetPlayerName(targetId), 'success')
+    SendMessage(targetId, 'Your admin privileges have been removed', 'info')
+end, false)
+
+-- Ban player
+RegisterCommand('ban', function(source, args, rawCommand)
+    if not HasPermission(source, 'ban') then
+        SendMessage(source, 'You do not have permission to use this command', 'error')
+        return
+    end
+
+    local targetId = tonumber(args[1])
+    if not targetId then
+        SendMessage(source, 'Usage: /ban [id] [reason]', 'error')
+        return
+    end
+
+    local reason = table.concat(args, ' ', 2) or 'No reason provided'
+    local identifier = GetPlayerMainIdentifier(targetId)
+    local targetName = GetPlayerName(targetId)
+
+    table.insert(bannedPlayers, {
+        identifier = identifier,
+        name = targetName,
+        reason = reason,
+        bannedBy = GetPlayerName(source),
+        bannedAt = os.date("%Y-%m-%d %H:%M:%S")
+    })
+
+    SaveBans()
+
+    DropPlayer(targetId, 'BANNED: ' .. reason)
+    SendMessage(source, 'Banned ' .. targetName .. ' - Reason: ' .. reason, 'success')
+
+    TriggerClientEvent('chat:addMessage', -1, {
+        color = {255, 0, 0},
+        args = {'[BAN]', targetName .. ' was banned by ' .. GetPlayerName(source)}
+    })
+end, false)
+
+-- Unban player
+RegisterCommand('unban', function(source, args, rawCommand)
+    if not HasPermission(source, 'unban') then
+        SendMessage(source, 'You do not have permission to use this command', 'error')
+        return
+    end
+
+    local banIndex = tonumber(args[1])
+    if not banIndex then
+        SendMessage(source, 'Usage: /unban [number] - Use /banlist to see numbers', 'error')
+        return
+    end
+
+    if bannedPlayers[banIndex] then
+        local unbannedName = bannedPlayers[banIndex].name
+        table.remove(bannedPlayers, banIndex)
+        SaveBans()
+        SendMessage(source, 'Unbanned ' .. unbannedName, 'success')
+    else
+        SendMessage(source, 'Invalid ban number', 'error')
+    end
+end, false)
+
+-- Ban list
+RegisterCommand('banlist', function(source, args, rawCommand)
+    if not IsAdmin(source) then
+        SendMessage(source, 'You do not have permission to use this command', 'error')
+        return
+    end
+
+    if #bannedPlayers == 0 then
+        SendMessage(source, 'No players banned', 'info')
+        return
+    end
+
+    SendMessage(source, '=== BAN LIST (' .. #bannedPlayers .. ') ===', 'info')
+    for i, ban in ipairs(bannedPlayers) do
+        SendMessage(source, '[' .. i .. '] ' .. ban.name .. ' - ' .. ban.reason .. ' (' .. ban.bannedAt .. ')', 'info')
+    end
+end, false)
+
+-- Check for banned players on connect
+AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
+    local source = source
+    deferrals.defer()
+    Wait(0)
+    deferrals.update('Checking ban status...')
+
+    local identifiers = GetPlayerIdentifiers(source)
+    for _, identifier in pairs(identifiers) do
+        local banned, ban = IsBanned(identifier)
+        if banned then
+            deferrals.done('You are banned from this server.\nReason: ' .. ban.reason .. '\nBanned by: ' .. ban.bannedBy .. '\nDate: ' .. ban.bannedAt)
+            return
+        end
+    end
+
+    deferrals.done()
+
+    -- Check if admin
+    if IsAdmin(source) then
+        local level = GetAdminLevel(source)
+        local levelName = 'Moderator'
+        if level == Config.Permissions.admin then
+            levelName = 'Admin'
+        elseif level == Config.Permissions.superadmin then
+            levelName = 'Super Admin'
+        end
+        print("^2[Admin-System]^7 Admin connected: " .. name .. " (" .. levelName .. ")")
+    end
+end)
 
 -- Kick player
 RegisterCommand('kick', function(source, args, rawCommand)
@@ -75,14 +266,13 @@ RegisterCommand('kick', function(source, args, rawCommand)
     end
 
     local reason = table.concat(args, ' ', 2) or 'No reason provided'
-
     DropPlayer(targetId, 'Kicked by admin: ' .. reason)
     SendMessage(source, 'Player kicked: ' .. GetPlayerName(targetId), 'success')
 end, false)
 
 -- Teleport to player
 RegisterCommand('goto', function(source, args, rawCommand)
-    if not HasPermission(source, 'goto') then
+    if not HasPermission(source, 'gotopl') then
         SendMessage(source, 'You do not have permission to use this command', 'error')
         return
     end
@@ -169,6 +359,55 @@ RegisterCommand('armor', function(source, args, rawCommand)
     end
 end, false)
 
+-- Give weapon
+RegisterCommand('weapon', function(source, args, rawCommand)
+    if not IsAdmin(source) then
+        SendMessage(source, 'You do not have permission to use this command', 'error')
+        return
+    end
+
+    local targetId = tonumber(args[1])
+    local weapon = args[2]
+
+    if not weapon then
+        -- If only one arg, give to self
+        weapon = args[1]
+        targetId = source
+    end
+
+    if not weapon then
+        SendMessage(source, 'Usage: /weapon [weapon] or /weapon [id] [weapon]', 'error')
+        SendMessage(source, 'Examples: pistol, tec9, ak47, mp5, shotgun', 'info')
+        return
+    end
+
+    TriggerClientEvent('admin:giveWeapon', targetId, weapon:upper())
+
+    if targetId == source then
+        SendMessage(source, 'You gave yourself ' .. weapon, 'success')
+    else
+        SendMessage(source, 'Gave ' .. weapon .. ' to ' .. GetPlayerName(targetId), 'success')
+        SendMessage(targetId, 'You received ' .. weapon .. ' from an admin', 'info')
+    end
+end, false)
+
+-- Give all weapons
+RegisterCommand('allweapons', function(source, args, rawCommand)
+    if not IsAdmin(source) then
+        SendMessage(source, 'You do not have permission to use this command', 'error')
+        return
+    end
+
+    local targetId = tonumber(args[1]) or source
+    TriggerClientEvent('admin:giveAllWeapons', targetId)
+
+    if targetId == source then
+        SendMessage(source, 'You gave yourself all weapons', 'success')
+    else
+        SendMessage(source, 'Gave all weapons to ' .. GetPlayerName(targetId), 'success')
+    end
+end, false)
+
 -- Announce message
 RegisterCommand('announce', function(source, args, rawCommand)
     if not HasPermission(source, 'announce') then
@@ -203,7 +442,8 @@ RegisterCommand('players', function(source, args, rawCommand)
 
     for _, playerId in ipairs(players) do
         local id = tonumber(playerId)
-        SendMessage(source, '[' .. id .. '] ' .. GetPlayerName(id), 'info')
+        local adminMarker = IsAdmin(id) and ' [ADMIN]' or ''
+        SendMessage(source, '[' .. id .. '] ' .. GetPlayerName(id) .. adminMarker, 'info')
     end
 end, false)
 
@@ -301,6 +541,17 @@ RegisterCommand('time', function(source, args, rawCommand)
     SendMessage(source, 'Time set to ' .. hour .. ':' .. minute, 'success')
 end, false)
 
+-- Enable nametags
+RegisterCommand('nametags', function(source, args, rawCommand)
+    if not IsAdmin(source) then
+        SendMessage(source, 'You do not have permission to use this command', 'error')
+        return
+    end
+
+    TriggerClientEvent('admin:toggleNametags', source)
+    SendMessage(source, 'Toggled player nametags', 'success')
+end, false)
+
 -- Admin menu
 RegisterCommand('admin', function(source, args, rawCommand)
     if not IsAdmin(source) then
@@ -311,24 +562,5 @@ RegisterCommand('admin', function(source, args, rawCommand)
     TriggerClientEvent('admin:openMenu', source)
 end, false)
 
--- Check admin on connect
-AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
-    local source = source
-
-    Wait(500)
-
-    if IsAdmin(source) then
-        local level = GetAdminLevel(source)
-        local levelName = 'Moderator'
-
-        if level == Config.Permissions.admin then
-            levelName = 'Admin'
-        elseif level == Config.Permissions.superadmin then
-            levelName = 'Super Admin'
-        end
-
-        print("^2[Admin-System]^7 Admin connected: " .. name .. " (" .. levelName .. ")")
-    end
-end)
-
-print("^2[Admin-System]^7 Loaded " .. #Config.Admins .. " admin(s)")
+print("^2[Admin-System]^7 Loaded " .. #Config.Admins .. " admin(s) from config")
+print("^2[Admin-System]^7 Use /makeadmin [id] to add admins in-game")
