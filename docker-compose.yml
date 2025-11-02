@@ -11,7 +11,7 @@ services:
     volumes:
       - ./:/server
     working_dir: /server
-    command: /server/run.sh +exec server.cfg
+    command: /server/run.sh +exec server-dev.cfg
     restart: unless-stopped
     tty: true
     stdin_open: true

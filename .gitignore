@@ -15,6 +15,7 @@ cache/*
 *.key
 *.pem
 server.cfg
+server-dev.cfg
 
 # Database files
 *.db
