@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Creator</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="character-creator" class="hidden">
+        <div class="container">
+            <div class="header">
+                <h1>Legacy Romania</h1>
+                <h2>Character Creation</h2>
+            </div>
+
+            <div class="content">
+                <!-- Step 1: Basic Info -->
+                <div id="step1" class="step active">
+                    <h3>Basic Information</h3>
+
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" placeholder="Enter first name" maxlength="20">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" placeholder="Enter last name" maxlength="20">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dateOfBirth">Date of Birth</label>
+                        <input type="date" id="dateOfBirth" max="2007-01-01">
+                    </div>
+
+                    <button class="btn btn-primary" onclick="nextStep()">Next</button>
+                </div>
+
+                <!-- Step 2: Appearance -->
+                <div id="step2" class="step">
+                    <h3>Appearance</h3>
+
+                    <div class="form-group">
+                        <label>Gender & Model</label>
+                        <div id="modelSelector" class="model-grid"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Heritage (Face)</label>
+                        <div class="heritage-selector">
+                            <button onclick="changeHeritage(0)">Preset 1</button>
+                            <button onclick="changeHeritage(1)">Preset 2</button>
+                            <button onclick="changeHeritage(2)">Preset 3</button>
+                            <button onclick="changeHeritage(3)">Preset 4</button>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="previousStep()">Back</button>
+                        <button class="btn btn-primary" onclick="nextStep()">Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Spawn Location -->
+                <div id="step3" class="step">
+                    <h3>Choose Spawn Location</h3>
+
+                    <div class="form-group">
+                        <div id="spawnSelector" class="spawn-grid"></div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="previousStep()">Back</button>
+                        <button class="btn btn-success" onclick="createCharacter()">Create Character</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <div class="progress">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <p class="step-indicator">Step <span id="currentStep">1</span> of 3</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

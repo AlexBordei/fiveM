@@ -1,0 +1,73 @@
+# FiveM Server - Claude Ignore File
+# Excludes files from Claude's context to improve performance
+
+# Cache and temporary files
+cache/*
+*.log
+*.tmp
+*.temp
+
+# Alpine Linux binaries (too large)
+alpine/bin/*
+alpine/lib/*
+alpine/usr/*
+alpine/opt/cfx-server/FXServer
+alpine/opt/cfx-server/citizen/
+
+# SSL certificates (large and not needed for context)
+alpine/etc/ssl/certs/*
+
+# Node modules (if any)
+node_modules/
+**/node_modules/
+
+# Build artifacts
+dist/
+build/
+*.min.js
+*.min.css
+
+# Resource build files
+**/yarn.lock
+**/package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE files
+.vscode/
+.idea/
+
+# Git
+.git/
+
+# Sensitive files (keep in context but be careful)
+# Uncomment these if you want to exclude them
+# server.cfg
+# deploy.sh
+# fivem.sh
+
+# Large resource files
+**/*.woff
+**/*.woff2
+**/*.ttf
+**/*.jpg
+**/*.png
+**/*.gif
+**/*.ico
+**/*.mp3
+**/*.mp4
+**/*.wav
+
+# Compiled resources
+**/*.dll
+**/*.so
+**/*.dylib
+
+# Database files
+*.db
+*.sqlite
+*.sql

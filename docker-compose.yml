@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  fivem:
+    image: alpine:latest
+    container_name: fivem-local
+    platform: linux/amd64
+    ports:
+      - "30120:30120/tcp"
+      - "30120:30120/udp"
+    volumes:
+      - ./:/server
+    working_dir: /server
+    command: /server/run.sh +exec server.cfg
+    restart: unless-stopped
+    tty: true
+    stdin_open: true

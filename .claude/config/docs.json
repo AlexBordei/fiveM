@@ -1,0 +1,13 @@
+{
+  "documentation": {
+    "sources": [
+      {
+        "name": "FiveM Documentation",
+        "url": "https://docs.fivem.net/docs/",
+        "description": "Official FiveM server and scripting documentation",
+        "type": "web",
+        "priority": "high"
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+# FiveM Server .gitignore
+
+# Cache directory
+cache/*
+!cache/.gitkeep
+
+# Server logs
+*.log
+
+# Server data (if contains sensitive info)
+# Uncomment if needed:
+# server-data/
+
+# Credentials and keys
+*.key
+*.pem
+
+# Database files
+*.db
+*.sqlite
+*.sql
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node modules (if using JS resources)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build artifacts
+dist/
+build/
+
+# FiveM server binaries (too large for GitHub)
+alpine/
