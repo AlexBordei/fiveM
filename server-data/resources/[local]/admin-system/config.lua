@@ -1,5 +1,8 @@
 Config = {}
 
+-- Master password for initial setup (use once then gets disabled)
+Config.MasterPassword = "legacy2025admin"
+
 -- Admin identifiers (Steam IDs, FiveM licenses, etc.)
 -- Add your admin identifiers here
 Config.Admins = {

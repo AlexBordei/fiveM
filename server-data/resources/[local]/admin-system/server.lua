@@ -37,6 +37,31 @@ end
 
 LoadBans()
 
+-- Master password setup flag
+local masterPasswordUsed = false
+
+-- Load master password flag
+local function LoadMasterPasswordFlag()
+    local file = io.open(GetResourcePath(GetCurrentResourceName()) .. '/master_used.flag', 'r')
+    if file then
+        file:close()
+        masterPasswordUsed = true
+        print("^3[Admin-System]^7 Master password already used")
+    end
+end
+
+-- Save master password flag
+local function SaveMasterPasswordFlag()
+    local file = io.open(GetResourcePath(GetCurrentResourceName()) .. '/master_used.flag', 'w')
+    if file then
+        file:write('USED')
+        file:close()
+        masterPasswordUsed = true
+    end
+end
+
+LoadMasterPasswordFlag()
+
 -- Check if player is banned
 local function IsBanned(identifier)
     for _, ban in pairs(bannedPlayers) do
@@ -103,6 +128,37 @@ function GetPlayerMainIdentifier(source)
     end
     return identifiers[1]
 end
+
+-- Master password setup command
+RegisterCommand('setupadmin', function(source, args, rawCommand)
+    -- Check if already used
+    if masterPasswordUsed then
+        SendMessage(source, 'Master password has already been used. Contact server owner.', 'error')
+        return
+    end
+
+    local password = args[1]
+    if not password then
+        SendMessage(source, 'Usage: /setupadmin [password]', 'error')
+        return
+    end
+
+    -- Check password
+    if password ~= Config.MasterPassword then
+        SendMessage(source, 'Invalid master password', 'error')
+        return
+    end
+
+    -- Make user super admin
+    local identifier = GetPlayerMainIdentifier(source)
+    runtimeAdmins[identifier] = Config.Permissions.superadmin
+
+    -- Save flag to prevent reuse
+    SaveMasterPasswordFlag()
+
+    SendMessage(source, 'You are now a Super Admin! Type /admin for commands', 'success')
+    print("^2[Admin-System]^7 Master password used by " .. GetPlayerName(source) .. " (" .. identifier .. ")")
+end, false)
 
 -- Make admin command
 RegisterCommand('makeadmin', function(source, args, rawCommand)
