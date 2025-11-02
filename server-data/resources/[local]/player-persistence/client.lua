@@ -1,13 +1,12 @@
--- Player Persistence Client Script
+-- Player Persistence Client Script (Simplified - No Spawn Override)
 print("^2[Player-Persistence]^7 Client script loaded")
 
-local hasSpawned = false
 local saveInterval = 30000 -- Save every 30 seconds
+local autoSaveStarted = false
 
 -- Save current position to server
 local function SavePosition()
     local ped = PlayerPedId()
-
     if not DoesEntityExist(ped) then return end
 
     local coords = GetEntityCoords(ped)
@@ -16,68 +15,18 @@ local function SavePosition()
     TriggerServerEvent('player-persistence:savePosition', coords.x, coords.y, coords.z, heading)
 end
 
--- Override spawn manager to use last position
+-- Wait for player to spawn, then start auto-save
 CreateThread(function()
-    -- Wait for spawnmanager to load
-    while GetResourceState('spawnmanager') ~= 'started' do
+    -- Wait for player to be spawned
+    while not NetworkIsPlayerActive(PlayerId()) do
         Wait(100)
     end
 
-    -- Set custom spawn callback
-    exports.spawnmanager:setAutoSpawnCallback(function()
-        -- Request last position from server
-        TriggerServerEvent('player-persistence:getLastPosition')
-    end)
+    -- Wait a bit more to ensure everything is loaded
+    Wait(2000)
 
-    -- Disable auto-spawn, we'll handle it manually
-    exports.spawnmanager:setAutoSpawn(false)
-end)
-
--- Receive last position from server
-RegisterNetEvent('player-persistence:receiveLastPosition')
-AddEventHandler('player-persistence:receiveLastPosition', function(position)
-    if hasSpawned then return end
-    hasSpawned = true
-
-    if position and position.x and position.y and position.z then
-        -- Spawn at last position
-        print("^2[Player-Persistence]^7 Spawning at last position")
-
-        exports.spawnmanager:spawnPlayer({
-            x = position.x,
-            y = position.y,
-            z = position.z,
-            heading = position.heading or 0.0,
-            skipFade = false
-        }, function()
-            -- Spawn complete
-            print("^2[Player-Persistence]^7 Spawned successfully")
-
-            -- Start auto-save
-            StartAutoSave()
-        end)
-    else
-        -- No saved position, use default spawn or character creator
-        print("^2[Player-Persistence]^7 No saved position, using default spawn")
-
-        -- Check if character-creator exists
-        if GetResourceState('character-creator') == 'started' then
-            -- Let character creator handle the spawn
-            TriggerEvent('character-creator:start')
-        else
-            -- Default spawn
-            exports.spawnmanager:spawnPlayer({
-                x = -269.4,
-                y = -955.3,
-                z = 31.2,
-                heading = 206.0,
-                model = 'a_m_y_skater_01'
-            }, function()
-                print("^2[Player-Persistence]^7 Spawned at default location")
-                StartAutoSave()
-            end)
-        end
-    end
+    print("^2[Player-Persistence]^7 Player spawned, starting auto-save")
+    StartAutoSave()
 end)
 
 -- Start automatic position saving
