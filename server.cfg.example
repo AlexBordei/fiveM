@@ -14,7 +14,7 @@ load_server_icon logo.png
 sv_maxclients 32
 
 # Server license key from https://keymaster.fivem.net
-sv_licenseKey "cfxk_1RPYznyZQPgX7lA0IUbMz_21CVR9"
+sv_licenseKey "YOUR_LICENSE_KEY_HERE"
 
 # Steam Web API key for Steam authentication (https://steamcommunity.com/dev/apikey)
 set steam_webApiKey "none"

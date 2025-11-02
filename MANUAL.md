@@ -344,6 +344,14 @@ add_ace identifier.steam:110000XXXXXXXX command allow
   - 5 spawn locations to choose from
   - See `server-data/resources/[local]/character-creator/README.md` for details
 
+- **player-persistence** - Player settings and spawn location persistence
+  - Auto-saves player position every 30 seconds
+  - Spawns players at their last location on reconnect
+  - Saves player settings and preferences
+  - Database-ready (currently uses in-memory storage)
+  - Commands: `/savepos`, `/getpos`
+  - See `server-data/resources/[local]/player-persistence/README.md` for database setup
+
 - **no-npcs** - Disable NPCs, traffic, and ambient entities
   - Configurable NPC/traffic density (0.0 = none, 1.0 = max)
   - Disable wanted level and police response
