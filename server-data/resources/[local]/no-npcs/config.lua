@@ -1,21 +1,19 @@
 Config = {}
 
--- NPC Settings
-Config.DisableNPCs = true              -- Disable random NPC spawning
-Config.DisableTraffic = true           -- Disable vehicle traffic
-Config.DisableParkedVehicles = true    -- Disable parked vehicles
-Config.DisableScenarioPeds = true      -- Disable scenario peds (sitting, smoking, etc.)
-Config.DisableBoats = true             -- Disable boat spawning
-Config.DisableGarbageTrucks = true     -- Disable garbage trucks
-Config.DisableRandomEvents = true      -- Disable random events (cops, ambulance, etc.)
+-- All NPC and traffic settings are permanently enabled
+-- This resource removes ALL NPCs, traffic, police, and ambient entities from the server
 
--- Wanted Level Settings
-Config.DisableWantedLevel = true       -- Disable police wanted level
-Config.DisablePoliceResponse = true    -- Disable police spawning when shooting
-
--- Ambient Settings
-Config.DisableAmbientSirens = true     -- Disable police/ambulance sirens in distance
-Config.DisableAmbientHelicopters = true -- Disable ambient helicopters
+Config.DisableNPCs = true
+Config.DisableTraffic = true
+Config.DisableParkedVehicles = true
+Config.DisableScenarioPeds = true
+Config.DisableBoats = true
+Config.DisableGarbageTrucks = true
+Config.DisableRandomEvents = true
+Config.DisableWantedLevel = true
+Config.DisablePoliceResponse = true
+Config.DisableAmbientSirens = true
+Config.DisableAmbientHelicopters = true
 
 -- Health Settings
 Config.DisableHealthRegeneration = false -- Keep health regeneration enabled by default

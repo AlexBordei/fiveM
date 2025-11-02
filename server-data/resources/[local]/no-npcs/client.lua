@@ -189,39 +189,4 @@ function EnumerateVehicles()
     end)
 end
 
--- Command to clear area
-RegisterCommand('clearnpcs', function()
-    local ped = PlayerPedId()
-    local coords = GetEntityCoords(ped)
-
-    -- Clear peds
-    ClearAreaOfPeds(coords.x, coords.y, coords.z, 1000.0, 1)
-
-    -- Clear vehicles
-    ClearAreaOfVehicles(coords.x, coords.y, coords.z, 1000.0, false, false, false, false, false)
-
-    -- Notification
-    TriggerEvent('chat:addMessage', {
-        color = {0, 255, 0},
-        args = {'No-NPCs', 'Area cleared!'}
-    })
-end, false)
-
--- Command to toggle NPCs (for testing)
-RegisterCommand('togglenpcs', function()
-    Config.DisableNPCs = not Config.DisableNPCs
-    Config.DisableTraffic = not Config.DisableTraffic
-
-    local status = Config.DisableNPCs and "disabled" or "enabled"
-
-    TriggerEvent('chat:addMessage', {
-        color = {255, 165, 0},
-        args = {'No-NPCs', 'NPCs and traffic ' .. status}
-    })
-end, false)
-
--- Add command suggestions
-exports.chat:addSuggestion('/clearnpcs', 'Clear all NPCs and vehicles in the area')
-exports.chat:addSuggestion('/togglenpcs', 'Toggle NPC and traffic spawning')
-
-print("^2[No-NPCs]^7 All NPC and traffic spawning disabled")
+print("^2[No-NPCs]^7 All NPC and traffic spawning permanently disabled")
